@@ -1,8 +1,10 @@
-from sqlalchemy.engine import create_engine
-from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy import create_engine
+from sqlalchemy.orm import declarative_base, sessionmaker
 
-engine= create_engine("postgresql://postgres:taran1234@localhost/pizza-delivery", echo=True)
+engine = create_engine(
+    "postgresql://postgres:taran1234@localhost:5432/pizza-delivery",
+    echo=True,
+)
 
 Base = declarative_base()
-Session = sessionmaker()
-
+Session = sessionmaker(bind=engine)

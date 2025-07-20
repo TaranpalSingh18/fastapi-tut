@@ -11,4 +11,11 @@ To Do: Pizza Delivery Project
 /api/orders  --> list all orders made
 /api/orders/{order_id}: --> retrive an order
 /api/user/order/{order_id} -->  get user's specific order
+---------------------------------------------------------------------
+What I leart till now:
+PostgreSQL
+Pydantic 
+sqlalchemy
+how to define models in python
+
 
