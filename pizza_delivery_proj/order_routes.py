@@ -20,10 +20,10 @@ def authorization(Authorize: AuthJWT=Depends()):
         raise HTTPException(status_code=401, detail="Unauthorized Request/Token Invalid")
     
 
-@order_router.post('/orders')
+@order_router.post('/order')
 async def placeOrder(payload: OrderModel, Authorise: AuthJWT = Depends()):
     try:
-        Authorise.jwt_required()  # ✅ Call on the injected instance
+        Authorise.jwt_required()
     except Exception as e:
         raise HTTPException(status_code=401, detail="Unauthorized Request/Token Invalid")
     
@@ -38,7 +38,7 @@ async def placeOrder(payload: OrderModel, Authorise: AuthJWT = Depends()):
         )
         new_order.user = user
         session.add(new_order)
-        session.commit()  # ✅ Missing in your code (very important)
+        session.commit()  
         
         return JSONResponse(status_code=200, content={"order": {
             "id": new_order.id,
@@ -49,6 +49,28 @@ async def placeOrder(payload: OrderModel, Authorise: AuthJWT = Depends()):
     
     else:
         raise HTTPException(status_code=404, detail="User Not Found!")
+    
+
+#for super user only
+@order_router.get('/orders')
+async def get_all_orders(payload: OrderModel, Authorise: AuthJWT=Depends()):
+    session = Session(bind = engine)
+    try:
+        Authorise.jwt_required()
+    except Exception as e:
+        raise HTTPException(status_code=401, detail="Unauthorised access")
+    
+    current_user = Authorise.get_jwt_subject()
+    user = session.query(User).filter(User.username == current_user)
+    if user.isStaff:
+        all_orders = session.query(Order).all()
+
+        return JSONResponse(status_code=200, content={"All Orders are": all_orders})
+    
+    raise HTTPException(status_code=404, detail="User Not Found/User is not a superuser")
+
+
+
 
 
     
