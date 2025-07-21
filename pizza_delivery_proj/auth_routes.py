@@ -43,27 +43,27 @@ async def signup(payload: SignupModel):
 @auth_router.post('/login')
 async def loginRoute(payload: LoginModel, Authorize: AuthJWT=Depends()):
     session = Session(bind=engine)
-    try:
-        db_user = session.query(User).filter(User.username == payload.username).first()
-        
-        if db_user is None:
-            raise HTTPException(status_code=401, detail="Invalid username or password")
-            
-        if not check_password_hash(db_user.password, payload.password):
-            raise HTTPException(status_code=401, detail="Invalid username or password")
-
-        access_token = Authorize.create_access_token(subject=db_user.username)
-        refresh_token = Authorize.create_refresh_token(subject=db_user.username)
-
-        response = {
-            "access_token": access_token,
-            "refresh_token": refresh_token
-        }
-
-        return jsonable_encoder(response)
     
-    finally:
-        session.close()
+    db_user = session.query(User).filter(User.username == payload.username).first()
+        
+    if db_user is None:
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+            
+    if not check_password_hash(db_user.password, payload.password):
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+
+    access_token = Authorize.create_access_token(subject=db_user.username)
+    refresh_token = Authorize.create_refresh_token(subject=db_user.username)
+
+    response = {
+        "access_token": access_token,
+        "refresh_token": refresh_token
+    }
+
+    return jsonable_encoder(response)
+    
+
+    
 
 
 

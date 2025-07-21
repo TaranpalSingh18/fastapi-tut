@@ -17,3 +17,13 @@ class Settings(BaseModel):
 class LoginModel(BaseModel):
     username:str
     password: str
+
+
+class OrderModel(BaseModel):
+    id: Optional[str]
+    quantity: int
+    choice_type: Optional[str]="PENDING"
+    pizza_size : Optional[str]="SMALL"
+    user_id:Optional[int]
+
+
