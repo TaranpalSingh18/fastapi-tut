@@ -1,10 +1,12 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import HTTPException
 from database import Session, engine
-from schemas import SignupModel
+from schemas import SignupModel, LoginModel
 from models import User
-from werkzeug.security import generate_password_hash
+from fastapi_jwt_auth import AuthJWT
+from werkzeug.security import generate_password_hash, check_password_hash
+from fastapi.encoders import jsonable_encoder
 
 auth_router = APIRouter(prefix="/auth", tags=['auth'])
 
@@ -39,19 +41,30 @@ async def signup(payload: SignupModel):
 
 
 @auth_router.post('/login')
-async def login(payload: SignupModel):
+async def loginRoute(payload: LoginModel, Authorize: AuthJWT=Depends()):
     session = Session(bind=engine)
     try:
-        db_email=session.query(User).filter(User.email==payload.email).first()
-        db_username=session.query(User).filter(User.username==payload.username).first()
-
-        if db_email is None:
-            raise HTTPException(status_code=404,detail="No Email ID exists! Signup and make one!")
-        if db_username is None:
-            raise HTTPException(status_code=404, detail="No Username exists! Make one")
+        db_user = session.query(User).filter(User.username == payload.username).first()
         
-        return JSONResponse(status_code=200, content="Login Succesfull")
+        if db_user is None:
+            raise HTTPException(status_code=401, detail="Invalid username or password")
+            
+        if not check_password_hash(db_user.password, payload.password):
+            raise HTTPException(status_code=401, detail="Invalid username or password")
 
+        access_token = Authorize.create_access_token(subject=db_user.username)
+        refresh_token = Authorize.create_refresh_token(subject=db_user.username)
+
+        response = {
+            "access_token": access_token,
+            "refresh_token": refresh_token
+        }
+
+        return jsonable_encoder(response)
+    
     finally:
         session.close()
 
+
+
+    
