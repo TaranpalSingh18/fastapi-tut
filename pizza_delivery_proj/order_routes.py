@@ -5,6 +5,8 @@ from models import User, Order
 from schemas import OrderModel, Settings
 from database import Session, engine
 from fastapi.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder
+
 
 order_router = APIRouter(prefix="/order", tags=['order'])
 
@@ -104,7 +106,6 @@ async def get_all_orders_of_a_user(Authorise: AuthJWT=Depends()):
 
 @order_router.get('/user/order/{order_id}')
 async def get_specific_order(order_id: int, Authorise:AuthJWT=Depends()):
-    session= Session(bind = engine)
     try:
         Authorise.jwt_required()
     except Exception as e:
@@ -116,9 +117,33 @@ async def get_specific_order(order_id: int, Authorise:AuthJWT=Depends()):
 
     for i in order:
         if order_id == i.id:
-            return i
+            return JSONResponse(status_code=200, content={"message":i})
         
     raise HTTPException(status_code=404,detail="No such order found")
+
+
+@order_router.put('/order/update/{order_id}')
+async def update_order(id: int,orderObject: OrderModel,Authorise: AuthJWT=Depends()):
+    try:
+        Authorise.jwt_required()
+    except Exception as e:
+        raise HTTPException(status_code=404, detail="Invalid Token")
+    
+    order_to_update = session.query(Order).filter(Order.id == id).first()
+
+    order_to_update.quantity= orderObject.quantity
+    order_to_update.choice_type= orderObject.choice_type
+    order_to_update.pizza_size=orderObject.pizza_size
+
+    session.commit()
+    
+    return jsonable_encoder(order_to_update)
+
+
+
+
+
+
 
 
 
