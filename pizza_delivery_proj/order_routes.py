@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from fastapi_jwt_auth import AuthJWT
 from fastapi.exceptions import HTTPException
 from models import User, Order
-from schemas import OrderModel, Settings
+from schemas import OrderModel, orderStatus
 from database import Session, engine
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
@@ -136,8 +136,57 @@ async def update_order(id: int,orderObject: OrderModel,Authorise: AuthJWT=Depend
     order_to_update.pizza_size=orderObject.pizza_size
 
     session.commit()
-    
+
     return jsonable_encoder(order_to_update)
+
+@order_router.put('/order/status/{order_id}')
+async def update_status(id:int, object:orderStatus, Authorise: AuthJWT=Depends()):
+    try:
+        Authorise.jwt_required()
+    except Exception as e:
+        raise HTTPException(status_code=404, detail="Invalid Token")
+    
+    current_user = Authorise.get_jwt_subject()
+
+    user = session.query(User).filter(User.username == current_user)
+
+    if user is None:
+        return JSONResponse(status_code=404, content="User Not Found")
+    
+    if user.isStaff:
+        order_to_update = session.query(Order).filter(Order.id==id)
+        if order_to_update is None:
+            return JSONResponse(status_code=404, content="Order of such id not found")
+        
+        order_to_update.status = object.status
+
+        session.commit()
+
+        return jsonable_encoder(order_to_update)
+        
+@order_router.delete('/order/delete/{order_id}')
+async def delete_order(id:int, Authorise: AuthJWT=Depends()):
+    try:
+        Authorise.jwt_required()
+    except Exception as e:
+        raise HTTPException(status_code=400, content="Invalid Token/ Unauthorised Access")
+    
+    order_to_be_deleted = session.query(Order).filter(Order.id == id)
+
+    session.delete(order_to_be_deleted)
+    session.commit()
+    
+    return JSONResponse(status_code=200, content="Order Deleted Successfully")
+
+
+    
+
+
+    
+    
+
+
+
 
 
 

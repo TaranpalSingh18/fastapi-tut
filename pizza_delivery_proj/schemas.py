@@ -26,4 +26,5 @@ class OrderModel(BaseModel):
     pizza_size : Optional[str]="SMALL"
     user_id:Optional[int]
 
-
+class orderStatus(BaseModel):
+    status : Optional[str]
